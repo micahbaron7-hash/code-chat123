@@ -14,15 +14,22 @@ const messageInput = document.getElementById("messageInput");
 const leaveButton = document.getElementById("leaveButton");
 
 joinButton.addEventListener("click", join);
+
 codeInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") join();
+  if (e.key === "Enter") {
+    join();
+  }
 });
+
 nameInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") join();
+  if (e.key === "Enter") {
+    join();
+  }
 });
 
 function join() {
   joinError.textContent = "";
+
   const name = nameInput.value.trim();
   const code = codeInput.value.trim();
 
@@ -31,57 +38,88 @@ function join() {
     return;
   }
 
-  socket.emit("joinRoom", { name, code });
+  socket.emit("joinRoom", {
+    name,
+    code
+  });
 }
 
 socket.on("joinError", (error) => {
   joinError.textContent = error;
 });
 
-socket.on("joined", ({ code, name }) => {
+socket.on("joined", ({ code }) => {
   joinScreen.classList.add("hidden");
   chatScreen.classList.remove("hidden");
+
   roomTitle.textContent = `Code: ${code}`;
+
   messages.innerHTML = "";
+
   messageInput.focus();
 });
 
-socket.on("message", ({ name, text, time }) => {
+function displayMessage(message) {
   const wrapper = document.createElement("div");
   wrapper.className = "message";
 
   const meta = document.createElement("div");
   meta.className = "meta";
-  meta.textContent = `${name} • ${time}`;
+  meta.textContent = `${message.name} • ${message.time}`;
 
   const body = document.createElement("div");
   body.className = "text";
-  body.textContent = text;
+  body.textContent = message.text;
 
   wrapper.appendChild(meta);
   wrapper.appendChild(body);
+
   messages.appendChild(wrapper);
+}
+
+socket.on("messageHistory", (history) => {
+  messages.innerHTML = "";
+
+  for (const message of history) {
+    displayMessage(message);
+  }
+
+  messages.scrollTop = messages.scrollHeight;
+});
+
+socket.on("message", (message) => {
+  displayMessage(message);
+
   messages.scrollTop = messages.scrollHeight;
 });
 
 socket.on("systemMessage", (text) => {
   const item = document.createElement("div");
+
   item.className = "system";
   item.textContent = text;
+
   messages.appendChild(item);
+
   messages.scrollTop = messages.scrollHeight;
 });
 
 socket.on("userCount", (count) => {
-  onlineCount.textContent = `${count} ${count === 1 ? "person" : "people"} online`;
+  onlineCount.textContent =
+    `${count} ${count === 1 ? "person" : "people"} online`;
 });
 
 messageForm.addEventListener("submit", (e) => {
   e.preventDefault();
+
   const text = messageInput.value.trim();
-  if (!text) return;
+
+  if (!text) {
+    return;
+  }
 
   socket.emit("sendMessage", text);
+
   messageInput.value = "";
   messageInput.focus();
 });
