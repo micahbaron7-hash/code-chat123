@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Chat</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <section id="joinScreen" class="card join-card">
+      <div class="logo">CC</div>
+      <h1>Code Chat</h1>
+      <p class="subtitle">Enter the same code as someone else to chat with them.</p>
+
+      <label for="nameInput">Display name</label>
+      <input id="nameInput" maxlength="24" placeholder="Your name" autocomplete="off">
+
+      <label for="codeInput">Chat code</label>
+      <input id="codeInput" maxlength="50" placeholder="Example: blue-room-123" autocomplete="off">
+
+      <button id="joinButton">Join chat</button>
+      <p id="joinError" class="error"></p>
+
+      <div class="tip">
+        Anyone who knows the code can enter the room. Don't use a code you consider secret.
+      </div>
+    </section>
+
+    <section id="chatScreen" class="chat-card hidden">
+      <header class="chat-header">
+        <div>
+          <h2 id="roomTitle">Chat</h2>
+          <span id="onlineCount">0 people online</span>
+        </div>
+        <button id="leaveButton" class="secondary">Leave</button>
+      </header>
+
+      <div id="messages" class="messages"></div>
+
+      <form id="messageForm" class="message-form">
+        <input id="messageInput" maxlength="500" placeholder="Type a message..." autocomplete="off">
+        <button type="submit">Send</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
