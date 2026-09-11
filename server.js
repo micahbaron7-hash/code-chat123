@@ -19,8 +19,12 @@ function cleanText(value, maxLength) {
 
 function getRoom(code) {
   if (!rooms.has(code)) {
-    rooms.set(code, { users: new Map() });
+    rooms.set(code, {
+      users: new Map(),
+      messages: []
+    });
   }
+
   return rooms.get(code);
 }
 
@@ -41,50 +45,90 @@ io.on("connection", (socket) => {
 
     if (socket.data.roomCode) {
       socket.leave(socket.data.roomCode);
+
       const oldRoom = rooms.get(socket.data.roomCode);
+
       if (oldRoom) {
         oldRoom.users.delete(socket.id);
-        if (oldRoom.users.size === 0) rooms.delete(socket.data.roomCode);
+
+        if (oldRoom.users.size === 0) {
+          rooms.delete(socket.data.roomCode);
+        }
       }
     }
 
     const room = getRoom(code);
+
     room.users.set(socket.id, name);
 
     socket.data.roomCode = code;
     socket.data.name = name;
+
     socket.join(code);
 
-    socket.emit("joined", { code, name });
+    socket.emit("joined", {
+      code,
+      name
+    });
+
+    socket.emit("messageHistory", room.messages);
+
     io.to(code).emit("systemMessage", `${name} joined the chat.`);
+
     io.to(code).emit("userCount", room.users.size);
   });
 
   socket.on("sendMessage", (message) => {
     const code = socket.data.roomCode;
     const name = socket.data.name;
-    if (!code || !name) return;
+
+    if (!code || !name) {
+      return;
+    }
 
     const text = cleanText(message, 500);
-    if (!text) return;
 
-    io.to(code).emit("message", {
+    if (!text) {
+      return;
+    }
+
+    const newMessage = {
       name,
       text,
       time: new Date().toLocaleTimeString([], {
         hour: "numeric",
         minute: "2-digit"
       })
-    });
+    };
+
+    const room = rooms.get(code);
+
+    if (!room) {
+      return;
+    }
+
+    room.messages.push(newMessage);
+
+    if (room.messages.length > 100) {
+      room.messages.shift();
+    }
+
+    io.to(code).emit("message", newMessage);
   });
 
   socket.on("disconnect", () => {
     const code = socket.data.roomCode;
     const name = socket.data.name;
-    if (!code) return;
+
+    if (!code) {
+      return;
+    }
 
     const room = rooms.get(code);
-    if (!room) return;
+
+    if (!room) {
+      return;
+    }
 
     room.users.delete(socket.id);
 
